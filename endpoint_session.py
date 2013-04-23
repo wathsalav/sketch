@@ -16,38 +16,53 @@ __email__	= "wathsala@princetone.edu"
 
 
 class Endpoint(base_object.BaseObject):
-	
-	_eidObject = ""
-	_eidJSON = ""
+
+	"""EID object for this endpoint"""	
+	_eid_object = ""
+	"""JSON representation of EID object for this endpoint"""
+	_eid_json = ""
+	"""Endpoint object of Twister"""
 	_endpoint = ""
+	"""Storage of the system"""
 	_store = ""
+	"""IP Addresses this endpoint is associated with"""
 	_ipaddrs = ""
-	_currentAddr = 0
+	"""Current IP,PORT pair in use. Used when\
+	 re-establishing connection with endpoint."""
+	_current_addr = 0
+	"""This is the splitter used to separate ports from IP addresses."""
 	_splitter = ""
+	"""Endpoint created by Twister for the client"""
 	_client_endpoint = ""
+	"""This is the trasnport session object, TCPSession or UDPSession"""
 	_trasnport_session = ""
 
-	def __init__(self, store, eidJSON):
-		self._eidJSON = eidJSON
-		self._eidObject = json.loads(self._eidJSON)
+	def __init__(self, store, eid_json, app_proto_handler):
+		self._eid_json = eid_json
+		self._eid_object = json.loads(self._eid_json)
 		self._store = store
-		self._ipaddrs = self._store.get((self._eidObject['eid']).encode())
+		self._ipaddrs = self._store.get((self._eid_object['eid']).encode())
 		self._splitter = re.compile(r'([:])')
-		ipp_pair = self._splitter.split(self._ipaddrs[self._currentAddr])
-		if self._eidObject['trans_proto'] == 'TCP4':
-			self._init_TCP4(ipp_pair[0], int(ipp_pair[2]), self._eidObject['app_proto'])
+		ipp_pair = self._splitter.split(self._ipaddrs[self._current_addr])
+		if self._eid_object['trans_proto'] == 'TCP4':
+			self._init_TCP4(ipp_pair[0], int(ipp_pair[2]), app_proto_handler)
+		app_proto_handler.set_host(ipp_pair[0])
+		app_proto_handler.set_port(int(ipp_pair[2]))
 		reactor.run()
 	
-	def _init_TCP4(self, ip, port, app_proto):
+	def _init_TCP4(self, ip, port, app_proto_handler):
 		self._endpoint = TCP4ClientEndpoint(reactor, ip, port)
 		self._client_endpoint = self._endpoint.connect(EndpointFactory())
-		self._transport_session = TCPSession(app_proto)
+		self._transport_session = TCPSession(app_proto_handler)
 		self._client_endpoint.addCallback(self._transport_session.handle_protocol)
 
 
 class EndpointProtocol(Protocol):
 	def dataReceived(self, data):
 		stdout.write(data)
+
+	def sendMessage(self, app_proto_handler):
+		self.transport.write(str(app_proto_handler.get_request()))
 
 
 class EndpointFactory(ClientFactory):

@@ -1,7 +1,8 @@
-import entity
-import eid
-import storage
-
+from entity import Entity
+from eid import EID
+from storage import Storage
+from endpoint_session import Endpoint
+from http_session import HTTPSession
 import uuid
 import hashlib
 import base64
@@ -15,7 +16,7 @@ def get_sha256_hash(idstr):
 
 #----------------------------Initialize your storage------------------------------------#
 """Initialize storage plugin"""
-st = storage.Storage('memcache_plugin', 'MemcachePlugin')
+st = Storage('memcache_plugin', 'MemcachePlugin')
 st.connect("127.0.0.1", 11211)
 
 
@@ -24,7 +25,7 @@ st.connect("127.0.0.1", 11211)
 eid_uuid = uuid.uuid4()
 xeid_key = get_sha256_hash(str(eid_uuid))
 """Create a service endpoint for this Data"""
-xeid = eid.EID(xeid_key, "HTTP/1.1", "TCP")
+xeid = EID(xeid_key, "HTTP/1.1", "TCP4")
 """Store this EID IP mapping in the ring"""
 locations = []
 locations.append('127.0.0.1:80')
@@ -33,7 +34,7 @@ st.put(xeid_key, locations)
 
 #-----------------------Create an entity and store it in registry----------------------#
 """Create an entity"""
-xentity = entity.Entity("A bogus document inserted to demonstrate the software", "Wathsala Object", "text/xml", "xyz", "D")
+xentity = Entity("A bogus document inserted to demonstrate the software", "Wathsala Object", "text/xml", "xyz", "D")
 """Create an SID string for the entity"""
 uuid = uuid.uuid4()
 sid_str = get_sha256_hash(str(uuid))
@@ -60,8 +61,11 @@ print "[Document Name]: "+ret_name
 print "[SID]: "+ret_sid
 """Get EID of thsi SID"""
 eid_json = st.get(ret_sid.encode())
-ret_eid = json.loads(eid_json)['eid']
-print "[EID]: "+ret_eid
+eid = json.loads(eid_json)
+print "[EID]: "+eid['eid']
 """Get EID - IP binding for this EID"""
-ip_addrs = st.get(ret_eid.encode())
+ip_addrs = st.get(eid['eid'].encode())
 print "[IP:PORT]: "+str(ip_addrs[0])+","+str(ip_addrs[1])
+
+http_request = HTTPSession("GET", "/"+ret_sid, eid['app_proto'])
+endpoint = Endpoint(st, eid_json, http_request)
