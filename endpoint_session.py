@@ -4,6 +4,8 @@ from twisted.internet import reactor
 from twisted.internet.protocol import ClientFactory, Protocol
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from sys import stdout
+from threading import Thread, Lock
+import Queue
 
 import base_object
 import storage
@@ -14,6 +16,11 @@ from transport_session import TCPSession
 __author__	= "Wathsala Vithanage"
 __email__	= "wathsala@princetone.edu"
 
+def start_session():
+	reactor.run()
+
+def stop_session():
+	reactor.stop()
 
 class Endpoint(base_object.BaseObject):
 
@@ -37,7 +44,7 @@ class Endpoint(base_object.BaseObject):
 	"""This is the trasnport session object, TCPSession or UDPSession"""
 	_trasnport_session = ""
 
-	def __init__(self, store, eid_json, app_proto_handler):
+	def __init__(self, store, eid_json):
 		self._eid_json = eid_json
 		self._eid_object = json.loads(self._eid_json)
 		self._store = store
@@ -45,24 +52,38 @@ class Endpoint(base_object.BaseObject):
 		self._splitter = re.compile(r'([:])')
 		ipp_pair = self._splitter.split(self._ipaddrs[self._current_addr])
 		if self._eid_object['trans_proto'] == 'TCP4':
-			self._init_TCP4(ipp_pair[0], int(ipp_pair[2]), app_proto_handler)
-		app_proto_handler.set_host(ipp_pair[0])
-		app_proto_handler.set_port(int(ipp_pair[2]))
-		reactor.run()
+			self._init_TCP4(ipp_pair[0], int(ipp_pair[2]))
 	
-	def _init_TCP4(self, ip, port, app_proto_handler):
+	def _init_TCP4(self, ip, port):
 		self._endpoint = TCP4ClientEndpoint(reactor, ip, port)
 		self._client_endpoint = self._endpoint.connect(EndpointFactory())
-		self._transport_session = TCPSession(app_proto_handler)
+		self._transport_session = TCPSession(ip, port)
 		self._client_endpoint.addCallback(self._transport_session.handle_protocol)
+
+	def add_app_proto_handler(self, app_proto_handler):
+		self._transport_session.add_app_proto_handler(app_proto_handler) 
 
 
 class EndpointProtocol(Protocol):
+
+	"""Application protocol handler associated with TCPSession\
+	for instance HTTPSession."""	
+	_app_proto_handler = None
+	
+	_queue = Queue.Queue()
+
 	def dataReceived(self, data):
-		stdout.write(data)
+		if self._app_proto_handler is None:
+			self._app_proto_handler = self._queue.get()
+		self._app_proto_handler.write_response(data)
+		if self._app_proto_handler.closeable():
+			self._app_proto_handler = None
+			
 
 	def sendMessage(self, app_proto_handler):
+		print app_proto_handler.get_request()
 		self.transport.write(str(app_proto_handler.get_request()))
+		self._queue.put_nowait(app_proto_handler)
 
 
 class EndpointFactory(ClientFactory):

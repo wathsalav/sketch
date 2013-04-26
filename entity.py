@@ -8,7 +8,7 @@ __email__	= "wathsala@princeton.edu"
 
 
 class Entity(base_object.BaseObject):
-	"""Human readable name of the entity"""
+	"""Name of the entity"""
 	name = ""
 
 	"""Description of the service/data"""
