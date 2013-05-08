@@ -70,13 +70,14 @@ print "[EID]: "+eid['eid']
 ip_addrs = st.get(eid['eid'].encode())
 print "[IP:PORT]: "+str(ip_addrs[0])+","+str(ip_addrs[1])
 
+print ret_name
 http_request = HTTPSession("GET", "/"+ret_name, eid['app_proto'])
-#x1 = open('test1', 'w')
-http_request.set_writer(stdout)
-#http_request2 = HTTPSession("GET", "/sfasff", eid['app_proto'])
-#http_request2.set_writer(stdout)
+x1 = open('test1', 'w')
+http_request.set_writer(x1)
+http_request2 = HTTPSession("GET", "/sfasff", eid['app_proto'])
+http_request2.set_writer(stdout)
 endpoint = Endpoint(st, eid_json)
 endpoint.add_app_proto_handler(http_request)
-#endpoint.add_app_proto_handler(http_request2)
+endpoint.add_app_proto_handler(http_request2)
 endpoint_session.start_session()
 print "[DONE]"
