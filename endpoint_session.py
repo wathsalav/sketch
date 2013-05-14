@@ -1,6 +1,10 @@
 import json
 import re
+
+from twisted.internet import epollreactor
+epollreactor.install()
 from twisted.internet import reactor
+
 from twisted.internet.protocol import ClientFactory, Protocol
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from sys import stdout
@@ -10,6 +14,12 @@ import Queue
 import base_object
 import storage
 from transport_session import TCPSession
+
+#from twisted.internet.defer import setDebugging
+#setDebugging(True)
+#from sys import stdout
+#from twisted.python import log
+#log.startLogging(stdout)
 
 """endpoint_seesion.py: Representation of a session with an endpoint.
    Session is always associated with an endpoint represented by an EID"""
@@ -51,17 +61,31 @@ class Endpoint(base_object.BaseObject):
 		self._ipaddrs = self._store.get((self._eid_object['eid']).encode())
 		self._splitter = re.compile(r'([:])')
 		ipp_pair = self._splitter.split(self._ipaddrs[self._current_addr])
+		self._transport_session = TCPSession(ipp_pair[0], int(ipp_pair[2]))
 		if self._eid_object['trans_proto'] == 'TCP4':
 			self._init_TCP4(ipp_pair[0], int(ipp_pair[2]))
+		
 	
 	def _init_TCP4(self, ip, port):
 		self._endpoint = TCP4ClientEndpoint(reactor, ip, port)
 		self._client_endpoint = self._endpoint.connect(EndpointFactory())
-		self._transport_session = TCPSession(ip, port)
+		#reactor.callLater(10, self._reinit_TCP4)
 		self._client_endpoint.addCallback(self._transport_session.handle_protocol)
+		self._client_endpoint.addErrback(self._errback)
+
+	def _errback(self, failure):
+		self._current_addr = self._current_addr + 1
+		try: 
+			ipp_pair = self._splitter.split(self._ipaddrs[self._current_addr])
+			if self._eid_object['trans_proto'] == 'TCP4':
+				self._init_TCP4(ipp_pair[0], int(ipp_pair[2]))
+		except IndexError:
+			print "No more endpoints to try!"
+			stop_session()
 
 	def add_app_proto_handler(self, app_proto_handler):
 		self._transport_session.add_app_proto_handler(app_proto_handler) 
+
 
 
 class EndpointProtocol(Protocol):
@@ -82,7 +106,7 @@ class EndpointProtocol(Protocol):
 
 	def sendMessage(self, app_proto_handler):
 		print app_proto_handler.get_request()
-		self.transport.write(str(app_proto_handler.get_request()))
+		wb = self.transport.write(str(app_proto_handler.get_request()))
 		self._queue.put_nowait(app_proto_handler)
 
 

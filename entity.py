@@ -32,7 +32,6 @@ class Entity(base_object.BaseObject):
 		self.content_type = content_type
 		self.content_encoding = content_encoding
 		self.entity_type = entity_type
-		self.sid = self.get_hash()
 
 
 	def set_sid(self, sid):

@@ -10,6 +10,7 @@ import hashlib
 import base64
 import json
 from sys import stdout
+import thread
 
 def get_sha256_hash(idstr):
 	key = "0123456789"
@@ -31,8 +32,8 @@ xeid_key = get_sha256_hash(str(eid_uuid))
 xeid = EID(xeid_key, "HTTP/1.1", "TCP4")
 """Store this EID IP mapping in the ring"""
 locations = []
-locations.append('127.0.0.1:80')
 locations.append('127.0.0.1:8080')
+locations.append('127.0.0.1:80')
 st.put(xeid_key, locations)
 
 #-----------------------Create an entity and store it in registry----------------------#
@@ -56,6 +57,7 @@ st.put(sid_str, xeid.object2json())
 """Lookup documents by author wathsala"""
 print "Looking up documents by wathsala..."
 entity_json = st.get('wathsala')
+#print ">>>>  "+str(len(entity_json))
 entity_obj = json.loads(entity_json)
 ret_sid = entity_obj['sid']
 ret_name = entity_obj['name']
@@ -64,6 +66,7 @@ print "[Document Name]: "+ret_name
 print "[SID]: "+ret_sid
 """Get EID of thsi SID"""
 eid_json = st.get(ret_sid.encode())
+#print ">>>> "+str(len(eid_json))
 eid = json.loads(eid_json)
 print "[EID]: "+eid['eid']
 """Get EID - IP binding for this EID"""

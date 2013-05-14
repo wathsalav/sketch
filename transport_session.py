@@ -30,8 +30,9 @@ class TCPSession(base_object.BaseObject):
 
 	def handle_protocol(self, endpoint_protocol):
 		#endpoint_protocol.setQueue(self._app_proto_queue)
-		x = True
-		while x == True:
+		#x = True
+		#while x == True:
+		while self._app_proto_queue.empty() != True:
 			ap = self._app_proto_queue.get(True, 1)
 			endpoint_protocol.sendMessage(ap)
 
