@@ -15,11 +15,11 @@ import base_object
 import storage
 from transport_session import TCPSession
 
-#from twisted.internet.defer import setDebugging
-#setDebugging(True)
-#from sys import stdout
-#from twisted.python import log
-#log.startLogging(stdout)
+from twisted.internet.defer import setDebugging
+setDebugging(True)
+from sys import stdout
+from twisted.python import log
+log.startLogging(stdout)
 
 """endpoint_seesion.py: Representation of a session with an endpoint.
    Session is always associated with an endpoint represented by an EID"""

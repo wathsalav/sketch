@@ -25,32 +25,32 @@ st.connect("127.0.0.1", 11211)
 
 
 #------------------Create an endpoint, it's key and store it in the ring----------------#
-"""Create a key for this endpoint"""
-eid_uuid = "befe328c-676a-4f06-96fe-57df6b39140e"#uuid.uuid4()
-xeid_key = get_sha256_hash(str(eid_uuid))
-"""Create a service endpoint for this Data"""
-xeid = EID(xeid_key, "HTTP/1.1", "TCP4")
-"""Store this EID IP mapping in the ring"""
-locations = []
-locations.append('127.0.0.1:8080')
-locations.append('127.0.0.1:80')
-st.put(xeid_key, locations)
-
-#-----------------------Create an entity and store it in registry----------------------#
-"""Create an entity"""
-xentity = Entity("WathsalaObject", "A bogus document inserted to demonstrate the software", "text/xml", "xyz", "D")
-"""Create an SID string for the entity"""
-uuid = "50aec6e5-1968-4243-a51c-ab1768a2c514"#uuid.uuid4()
-sid_str = get_sha256_hash(str(uuid))
-xentity.set_sid(sid_str)
-xjson = xentity.object2json()
-
-"""Store this entity in author registry"""
-st.put("wathsala", xjson)
+#"""Create a key for this endpoint"""
+#eid_uuid = "befe328c-676a-4f06-96fe-57df6b39140e"#uuid.uuid4()
+#xeid_key = get_sha256_hash(str(eid_uuid))
+#"""Create a service endpoint for this Data"""
+#xeid = EID(xeid_key, "HTTP/1.1", "TCP4")
+#"""Store this EID IP mapping in the ring"""
+#locations = []
+#locations.append('127.0.0.1:8080')
+#locations.append('127.0.0.1:80')
+#st.put(xeid_key, locations)
+#
+##-----------------------Create an entity and store it in registry----------------------#
+#"""Create an entity"""
+#xentity = Entity("WathsalaObject", "A bogus document inserted to demonstrate the software", "text/xml", "xyz", "D")
+#"""Create an SID string for the entity"""
+#uuid = "50aec6e5-1968-4243-a51c-ab1768a2c514"#uuid.uuid4()
+#sid_str = get_sha256_hash(str(uuid))
+#xentity.set_sid(sid_str)
+#xjson = xentity.object2json()
+#
+#"""Store this entity in author registry"""
+#st.put("wathsala", xjson)
 
 #---------------------------Store SID - EID mapping in the ring-----------------------#
-"""Store this entity's EID under sid_str"""
-st.put(sid_str, xeid.object2json())
+#"""Store this entity's EID under sid_str"""
+#st.put(sid_str, xeid.object2json())
 
 
 #-------------------------------Find service/data endpoint----------------------------#
