@@ -14,11 +14,13 @@ import json
 import sys
 import thread
 
+
 def get_sha256_hash(idstr):
 	key = "0123456789"
 	shaObj = hashlib.sha256()
 	shaObj.update(idstr+key)
 	return (base64.b64encode(shaObj.digest()).decode()).encode()
+
 
 def main():
 #----------------------------Initialize your storage------------------------------------#
